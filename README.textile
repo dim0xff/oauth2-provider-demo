@@ -1,0 +1,47 @@
+Catalyst OAuth2 provider demo app
+
+h1. Flow
+
+<pre>
++----------+          Client Identifier      +---------------+
+|         -+----(A)--- & Redirect URI ------>|               |
+| End-user |                                 |     OAuth     |
+|    at    |<---(B)-- User authenticates --->|    Provider   |
+| Browser  |                                 |               |
+|         -+----(C)-- Authorization Code ---<|               |
++-|----|---+                                 +---------------+
+  |    |                                         ^   v   ^
+ (A)  (C)                                        |   |   |
+  |    |                                         |   |   |
+  ^    v                                         |   |   |
++---------+                                      |   |   |
+|         |>---(D)-- Client Credentials, --------'   |   |
+|  OAuth2 |          Authorization Code,             |   |
+|  Client |            & Redirect URI                |   |
+|         |                                          |   |
+|         |<---(E)----- Access Token ----------------'   |
+|         |       (w/ Optional Refresh Token)            |
+|         |                                              |
+|         |>---(F)------ Send Access Token --------------'
+|         |                Get back data
+|         |                for end user
++---------+
+</pre>
+
+
+h1. An OAuth Provider
+
+* Provider owns a protected resource that belongs to a user. (password)
+* Provider generates keys ( client_id, client_secret ) for OAuth clients.
+
+h1. An OAuth Client
+
+* Client wants to access the protected resource on an OAuth provider.
+* Client knows its own client_id, and client_secret, redirect_uri
+
+h1. Registration flow
+
+* Register an oauth client with the "redirect_uri" and "application_name".
+* Get the client_id and client_secret.
+
+Now the oauth provider and oauth clients know about each other.
