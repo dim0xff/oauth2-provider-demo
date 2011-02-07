@@ -1,0 +1,3 @@
+[submodule "etc/oauth2-appengine"]
+	path = etc/oauth2-appengine
+	url = git@github.com:zdk/oauth2-appengine.git
