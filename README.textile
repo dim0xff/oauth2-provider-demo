@@ -1,4 +1,4 @@
-Catalyst OAuth2 provider demo app
+OAuth2 Provider Demo on Perl Catalyst framework
 
 h1. Flow
 
