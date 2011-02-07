@@ -17,15 +17,24 @@ Catalyst Controller.
 =cut
 
 
-=head2 index
-
+=head2 base
+    Base for chained method  #match /oauth
 =cut
 
-sub index :Path :Args(0) {
-    my ( $self, $c ) = @_;
+sub base :Chained("/") :PathPart("oauth") :CaptureArgs(0) {}
 
-    $c->response->body('Matched OAuth2::Provider::Demo::Controller::Oauth in Oauth.');
-}
+=head2 authorize
+    AuthorizationHandler #match /oauth/authorize
+=cut
+
+sub authorize :Chained("base") :PathPart("authorize") :Args(0) {}
+
+=head2 token
+    AccessTokenHandler #match /oauth/token
+=cut
+
+sub token :Chained("base") :PathPart("token") :Args(0) {}
+
 
 
 =head1 AUTHOR

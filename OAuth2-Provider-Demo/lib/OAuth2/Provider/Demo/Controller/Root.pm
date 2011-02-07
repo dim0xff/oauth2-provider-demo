@@ -30,7 +30,7 @@ sub index :Path :Args(0) {
     my ( $self, $c ) = @_;
 
     # Hello World
-    $c->response->body( $c->welcome_message );
+    $c->response->body('Hello, this is Catalyst OAuth2 demo app');
 }
 
 =head2 default
