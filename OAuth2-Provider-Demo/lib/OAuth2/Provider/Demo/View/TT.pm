@@ -23,21 +23,12 @@ it under the same terms as Perl itself.
 
 =cut
 
+__PACKAGE__->config({
+        DEFAULT_ENCODING => 'utf-8',
+        INCLUDE_PATH     => [ OAuth2::Provider::Demo->path_to( 'root', 'base' ), ],
+        WRAPPER          => 'wrapper.tt',
+    });
 
-__PACKAGE__->config(
-    TEMPLATE_EXTENSION => '.tt',
-    render_die => 1,
-    INCLUDE_PATH => [
-       OAuth2::Provider::Demo->path_to( 'root', 'base' ),
-    ],
-    # Set to 1 for detailed timer stats in your HTML as comments
-    TIMER => 0,
-    # This is your wrapper template located in the 'root/src'
-    WRAPPER => 'wrapper.tt',
-    ENCODING => 'utf-8',
-);
-
-
-__PACKAGE__->meta->make_immutable;
+__PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;
