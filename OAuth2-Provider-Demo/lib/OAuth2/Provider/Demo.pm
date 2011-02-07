@@ -15,6 +15,7 @@ use Catalyst::Runtime 5.80;
 use Catalyst qw/
     ConfigLoader
     Static::Simple
+    Unicode::Encoding
 /;
 
 extends 'Catalyst';
@@ -35,6 +36,7 @@ __PACKAGE__->config(
     name => '+OAuth2::Provider::Demo',
     # Disable deprecated behavior needed by old applications
     disable_component_resolution_regex_fallback => 1,
+    default_view => 'TT',
 );
 
 # Start the application
