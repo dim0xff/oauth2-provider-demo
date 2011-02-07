@@ -1,1 +1,16 @@
 Random stuff in PROJECT/etc, only for reference.
+
+Run "oauth2-appengine" with Google App Engine SDK
+
+Register Client at
+http://localhost:{RUNNING_PORT}/admin/clients
+
+$cd oauth2-appengine/spec
+
+Edit the test file "oauth_server.rb"
+CLIENT_ID={YOUR_CLIENT_ID}
+CLIENT_SECRET={YOUR_CLIENT_ID}
+
+$ruby oauth_server.rb --color --format d 
+
+(Use this test as a reference for implementation)
