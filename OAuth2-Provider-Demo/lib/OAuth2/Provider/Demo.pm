@@ -18,6 +18,11 @@ use Catalyst qw/
     ConfigLoader
     Static::Simple
     Unicode::Encoding
+    Authentication
+    Session
+    Session::Store::FastMmap
+    Session::State::Cookie
+    Session::PerUser
 /;
 
 extends 'Catalyst';
@@ -34,6 +39,14 @@ $VERSION = eval $VERSION;
 # with an external configuration file acting as an override for
 # local deployment.
 
+
+has 'data_handler' => (
+    is      => 'rw',
+    isa     => 'TestDataHandler',
+    default =>  sub { TestDataHandler->new },
+);
+
+
 __PACKAGE__->config(
     name => '+OAuth2::Provider::Demo',
     # Disable deprecated behavior needed by old applications
@@ -41,14 +54,19 @@ __PACKAGE__->config(
     default_view => 'TT',
 );
 
+__PACKAGE__->config( 'authentication' => {
+     realms => {
+         default => {
+             credential => {
+                 class       => 'Password',
+                 password_type => 'none',
+             },
+         }
+     }
+ } );
+
 # Start the application
 __PACKAGE__->setup();
-
-has 'data_handler' => (
-    is      => 'rw',
-    isa     => 'TestDataHandler',
-    default =>  sub { TestDataHandler->new },
-);
 
 
 =head1 NAME

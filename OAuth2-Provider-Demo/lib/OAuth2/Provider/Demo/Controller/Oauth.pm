@@ -51,6 +51,16 @@ sub base :Chained("/") :PathPart("oauth") :CaptureArgs(0) {}
 
 sub authorize :Chained("base") :PathPart("authorize") :Args(0) {
     my ( $self, $c ) = @_;
+    #validate params
+    if ( $c->req->method eq "GET" ) {
+        $c->res->body("login_form with CLIENT_ID=af5859b5bf7b35f172a0eab126d072a5227f4465") unless $c->user;
+        return;
+    }
+
+    if ( $c->req->method eq "POST" ) {
+        my $redirect_uri = $c->req->param("redirect_uri");
+        $c->res->redirect_to( $redirect_uri );
+    }
 }
 
 =head2 token

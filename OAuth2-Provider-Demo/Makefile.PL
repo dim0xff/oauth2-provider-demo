@@ -14,6 +14,12 @@ requires 'Catalyst::Plugin::ConfigLoader';
 requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Action::RenderView';
 requires 'Catalyst::View::JSON' => '0.32';
+requires 'Catalyst::Authentication::Realm::SimpleDB';
+requires 'Catalyst::Plugin::Authentication';
+requires 'Catalyst::Plugin::Session';
+requires 'Catalyst::Plugin::Session::Store::FastMmap';
+requires 'Catalyst::Plugin::Session::State::Cookie';
+requires 'Catalyst::Plugin::Session::PerUser';
 requires 'Moose';
 requires 'namespace::autoclean';
 requires 'Config::General'; # This should reflect the config file format you've chosen
