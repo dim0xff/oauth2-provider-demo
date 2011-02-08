@@ -1,3 +1,6 @@
 [submodule "etc/oauth2-appengine"]
 	path = etc/oauth2-appengine
 	url = git@github.com:zdk/oauth2-appengine.git
+[submodule "etc/p5-oauth-lite2"]
+	path = etc/p5-oauth-lite2
+	url = git@github.com:zdk/p5-oauth-lite2.git
