@@ -1,6 +1,7 @@
 package OAuth2::Provider::Demo;
 use Moose;
 use namespace::autoclean;
+use TestDataHandler;
 
 use Catalyst::Runtime 5.80;
 
@@ -13,6 +14,7 @@ use Catalyst::Runtime 5.80;
 #                 directory
 
 use Catalyst qw/
+    -Debug
     ConfigLoader
     Static::Simple
     Unicode::Encoding
@@ -41,6 +43,12 @@ __PACKAGE__->config(
 
 # Start the application
 __PACKAGE__->setup();
+
+has 'data_handler' => (
+    is      => 'rw',
+    isa     => 'TestDataHandler',
+    default =>  sub { TestDataHandler->new },
+);
 
 
 =head1 NAME

@@ -95,7 +95,6 @@ sub get_client_by_id {
 #   - refresh
 sub get_auth_info_by_refresh_token {
     my ($self, $refresh_token) = @_;
-
     for my $id (keys %AUTH_INFO) {
         my $auth_info = $AUTH_INFO{$id};
         return $auth_info if $auth_info->{refresh_token} eq $refresh_token;
@@ -129,7 +128,7 @@ sub create_or_update_auth_info {
     my $redirect_uri = $params{redirect_uri};
 
     my $id = ref($self)->gen_next_auth_info_id();
-    my $refresh_token = sprintf q{refresh_token_%d}, $id;
+    my $refresh_token = $params{refresh_token} || (sprintf q{refresh_token_%d}, $id);
 
     my $auth_info = OAuth::Lite2::Model::AuthInfo->new({
         id            => $id,
@@ -142,7 +141,6 @@ sub create_or_update_auth_info {
     $auth_info->redirect_uri($redirect_uri) if $redirect_uri;
 
     $AUTH_INFO{$id} = $auth_info;
-
     return $auth_info;
 }
 

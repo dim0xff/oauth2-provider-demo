@@ -24,6 +24,8 @@ it under the same terms as Perl itself.
 
 =cut
 
+__PACKAGE__->config->{expose_stash} = qr/[^current_view]/;
+
 __PACKAGE__->meta->make_immutable(inline_constructor => 0);
 
 1;
