@@ -54,16 +54,25 @@ __PACKAGE__->config(
     default_view => 'TT',
 );
 
-__PACKAGE__->config( 'authentication' => {
-     realms => {
-         default => {
-             credential => {
-                 class       => 'Password',
-                 password_type => 'none',
-             },
-         }
-     }
- } );
+__PACKAGE__->config( 'Plugin::Authentication' =>
+               {
+                   default => {
+                       credential => {
+                           class => 'Password',
+                           password_field => 'password',
+                           password_type => 'clear'
+                       },
+                       store => {
+                           class => 'Minimal',
+                           users => {
+                               ac123 => {
+                                   password => "123",
+                               },
+                           }
+                       }
+                   }
+               }
+   );
 
 # Start the application
 __PACKAGE__->setup();

@@ -45,6 +45,14 @@ sub default :Path {
     $c->response->status(404);
 }
 
+=head2 logout
+=cut
+sub logout :Global {
+    my ( $self, $c ) = @_;
+    $c->logout( );
+    $c->res->body("LOGGED OUT");
+}
+
 =head2 end
 
 Attempt to render a view, if needed.

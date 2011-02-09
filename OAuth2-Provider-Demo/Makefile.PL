@@ -26,6 +26,7 @@ requires 'Config::General'; # This should reflect the config file format you've 
                  # See Catalyst::Plugin::ConfigLoader for supported formats
 requires 'Test::WWW::Mechanize::Catalyst';
 requires 'OAuth::Lite2';
+requires 'Try::Tiny';
 
 test_requires 'Test::More' => '0.88';
 catalyst;
