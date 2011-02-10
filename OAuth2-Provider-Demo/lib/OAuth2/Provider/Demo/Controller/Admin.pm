@@ -32,6 +32,7 @@ sub index :Path :Args(0) {
 
 sub clients :Local {
     my ( $self, $c ) = @_;
+    $c->stash( clients => [$c->model('DBIC::OauthClient')->all] );
 }
 
 

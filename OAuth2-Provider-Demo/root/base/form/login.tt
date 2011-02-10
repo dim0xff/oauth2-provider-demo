@@ -1,0 +1,7 @@
+::LOGIN FORM::
+<form name='login' method='POST'>
+  username :<input type='text' name='user' /><br />
+  password :<input type='password' name='password' /><br />
+  <input type='hidden' name="redirect_uri" value='http://localhost:3333/callback' />
+  <input type='submit' value='Just login!' style='background:green' />
+</form>

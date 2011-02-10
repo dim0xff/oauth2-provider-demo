@@ -1,0 +1,10 @@
+<ul>
+[% FOREACH client IN clients -%]
+  <li>
+    id: [% client.id %], 
+    client_id: [% client.client_id %],
+    client_secret: [% client.client_secret %],
+    redirect_uri: [% client.redirect_uri %]
+  </li>
+[% END -%]
+</ul>
