@@ -49,10 +49,9 @@ sub auto : Private {
 sub base :Chained('/') :PathPart('oauth') :CaptureArgs(0) {
     my ( $self, $c ) = @_;
 
-    my $client                 = $c->model('DBIC::OauthClient')
-                                    ->find( { client_id => $c->req->param('client_id') } ) 
-                                    unless  $c->stash->{client_id};
-    # die( Dumper($client->client_id) );
+    my $client  = $c->model('DBIC::OauthClient')
+                      ->find( { client_id => $c->req->param('client_id') } )
+                         unless $c->stash->{client_id};
     OAuth::Lite2::Server::Error::InvalidClient->throw unless $client;
 
     $c->stash->{client_name}   = $client->name;
@@ -78,10 +77,13 @@ sub base :Chained('/') :PathPart('oauth') :CaptureArgs(0) {
 
 sub authorize :Chained('base') :PathPart('authorize') :Args(0) {
     my ( $self, $c ) = @_;
-    #LOGIN REQUIRED
-    $c->forward('check_login');
 
-    if ( $c->req->method eq 'GET' ) { $c->stash( template => 'oauth/authorize.tt' ); }
+    $c->forward('user_authenticated');  #LOGIN REQUIRED
+
+    if ( $c->req->method eq 'GET' ) {
+        $c->stash( authorize_endpoint => $c->uri_for_action($c->action) );
+        $c->stash( template => 'oauth/authorize.tt' ); 
+    }
 
     if ( $c->req->method eq 'POST' ) {
         OAuth::Lite2::Server::Error::InvalidRequest->throw(
@@ -90,19 +92,6 @@ sub authorize :Chained('base') :PathPart('authorize') :Args(0) {
         $c->res->redirect( $c->stash->{redirect_uri} . q{?} . build_content({ code => q{code_bar} }));
     }
     $c->forward( $c->view('TT') )
-}
-
-
-sub check_login :Private {
-  my ( $self, $c ) = @_;
-
-  return 1 if $c->user_exists;
-  return 1 if ( $c->authenticate( { username => $c->req->param('user'),
-                                    password => $c->req->param('password') } ) );
-  $c->stash( template => 'form/login.tt' );
-  $c->res->status(403);
-  # abort this request
-  $c->detach( $c->view('TT') );
 }
 
 =head2 token
@@ -117,6 +106,27 @@ sub token :Chained('base') :PathPart('token') :Args(0) {
     $c->stash->{refresh_token} = $c->req->param('refresh_token');
     $c->forward('handle');
 }
+
+
+=head2 user_authenticated
+  Check user login
+=cut
+
+sub user_authenticated :Private {
+  my ( $self, $c ) = @_;
+
+  return 1 if $c->user_exists;
+  return 1 if ( $c->authenticate( { username => $c->req->param('user'),
+                                    password => $c->req->param('password') } ) );
+  $c->stash( template => 'form/login.tt' );
+  $c->res->status(403);
+  # abort this request
+  $c->detach( $c->view('TT') );
+}
+
+=head2 handle
+ Adapter function to detach for each grant type.
+=cut
 
 sub handle :Private {
     my ( $self, $c ) = @_;
@@ -141,6 +151,10 @@ sub handle :Private {
 }
 
 
+=head2 handle_authorization_code
+  Authorization code grant
+=cut
+
 sub handle_authorization_code : Private {
     my ( $self, $c ) = @_;
     my $authorizationCodeHandler = OAuth::Lite2::Server::GrantHandler::AuthorizationCode->new;
@@ -156,6 +170,11 @@ sub handle_authorization_code : Private {
     $c->stash( $res );
 }
 
+
+=head2 handle_password
+  Password grant type
+=cut
+
 sub handle_password :Private {
     my ( $self, $c ) = @_;
     my $passwordHandler = OAuth::Lite2::Server::GrantHandler::Password->new;
@@ -165,6 +184,11 @@ sub handle_password :Private {
     my $res = $passwordHandler->handle_request( $c );
     $c->stash( $res );
 }
+
+
+=head2 handle_refresh_token
+  Refresh token grant type
+=cut
 
 sub handle_refresh_token :Private {
     my ( $self, $c ) = @_;
