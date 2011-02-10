@@ -8,6 +8,7 @@ use OAuth::Lite2::Server::GrantHandler::RefreshToken;
 
 use OAuth::Lite2::Server::Endpoint::Token;
 use OAuth::Lite2::Util qw(build_content);
+use OAuth::Lite2::Server::Error;
 
 
 use Try::Tiny;
@@ -49,14 +50,20 @@ sub base :Chained('/') :PathPart('oauth') :CaptureArgs(0) {
     my ( $self, $c ) = @_;
 
     my $client                 = $c->model('DBIC::OauthClient')
-                                    ->find( { client_id => $c->req->param('client_id') } );
+                                    ->find( { client_id => $c->req->param('client_id') } ) 
+                                    unless  $c->stash->{client_id};
+    # die( Dumper($client->client_id) );
+    OAuth::Lite2::Server::Error::InvalidClient->throw unless $client;
+
+    $c->stash->{client_name}   = $client->name;
     $c->stash->{client_id}     = $client->client_id;
     $c->stash->{client_secret} = $client->client_secret;
     $c->stash->{redirect_uri}  = $client->redirect_uri;
 
+
     TestDataHandler->clear;
     TestDataHandler->add_client(  id     => $client->client_id,
-                                  secret => $client->client_secret);
+                                  secret => $client->client_secret );
     my $users    = $c->config->{'Plugin::Authentication'}->{default}->{store}->{users};
     my $username = (keys %{$users} )[0];
     my $password = $users->{$username}->{password};
@@ -71,33 +78,31 @@ sub base :Chained('/') :PathPart('oauth') :CaptureArgs(0) {
 
 sub authorize :Chained('base') :PathPart('authorize') :Args(0) {
     my ( $self, $c ) = @_;
+    #LOGIN REQUIRED
+    $c->forward('check_login');
 
-    if ( $c->req->method eq 'GET' ) {
-        # $c->res->body("login_form with CLIENT_ID=af5859b5bf7b35f172a0eab126d072a5227f4465") unless $c->user;
-        #LOGIN REQUIRED
-        if (! $c->user ) {
-            $c->stash( template => 'form/login.tt')
-        } else {
-            $c->stash( template => 'oauth/authorize.tt' );
-        }
-        $c->forward( $c->view('TT') );
-    }
+    if ( $c->req->method eq 'GET' ) { $c->stash( template => 'oauth/authorize.tt' ); }
 
     if ( $c->req->method eq 'POST' ) {
-
-        my $redirect_uri = $c->req->param('redirect_uri');
-        my $user         = $c->req->param('user');
-        my $password     = $c->req->param('password');
-
-        if ( $c->authenticate( { username => $user,
-                                 password => $password } ) ) {
-            $c->res->redirect( $c->uri_for('/oauth/authorize') );
-        } else {
-            $c->res->body('login incorrect');
-        }
-
-        $c->res->redirect( $redirect_uri . q{?} . build_content( { code => q{code_bar} }) );
+        OAuth::Lite2::Server::Error::InvalidRequest->throw(
+            description => "'redirect_uri' does not match with registered client_id"
+        ) unless $c->req->param('redirect_uri') eq $c->stash->{redirect_uri};
+        $c->res->redirect( $c->stash->{redirect_uri} . q{?} . build_content({ code => q{code_bar} }));
     }
+    $c->forward( $c->view('TT') )
+}
+
+
+sub check_login :Private {
+  my ( $self, $c ) = @_;
+
+  return 1 if $c->user_exists;
+  return 1 if ( $c->authenticate( { username => $c->req->param('user'),
+                                    password => $c->req->param('password') } ) );
+  $c->stash( template => 'form/login.tt' );
+  $c->res->status(403);
+  # abort this request
+  $c->detach( $c->view('TT') );
 }
 
 =head2 token
@@ -124,20 +129,14 @@ sub handle :Private {
     } catch {
         $c->log->info("------- <ERROR> ------");
         if ($_->isa("OAuth::Lite2::Server::Error")) {
-            use Data::Dumper;
-            $c->log->debug ( "ERROR DUMP:" );
-            $c->log->debug ( Dumper $_ );
             my %error_params = ( error => $_->type );
-            my $formatter = OAuth::Lite2::Formatters->get_formatter_by_name("json");
+            my $formatter    = OAuth::Lite2::Formatters->get_formatter_by_name("json");
             $error_params{error_description} = $_->description if $_->description;
             $c->res->status( $_->code );
             $c->res->headers->header( 'Content-Type' => $formatter->type,
                                            'Cache-Control' => 'no-store' );
             $c->res->body( $formatter->format(\%error_params) );
-        } else {
-            # rethrow
-            die $_;
-        }
+        } else { die $_; }
     };
 }
 

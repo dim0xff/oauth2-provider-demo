@@ -1,7 +1,5 @@
-AUTHORIZE
-
 <form method="post">
-Do you wish to allow the service named '{{client.name}}' to access this application on your behalf?
+Do you wish to allow the service named <b>'[% client_name %]'</b> to access this application on your behalf?
 <input type="submit" value="Yes" name="authorize" />
 <input type="submit" value="No" name="authorize" />
 
