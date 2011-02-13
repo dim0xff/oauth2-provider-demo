@@ -2,6 +2,9 @@ package TestApp::Controller::Root;
 use Moose;
 use namespace::autoclean;
 
+use OAuth::Lite2::Client::WebServer;
+use Data::Dumper;
+
 BEGIN { extends 'Catalyst::Controller' }
 
 #
@@ -19,12 +22,59 @@ TestApp::Controller::Root - Root Controller for TestApp
 [enter your description here]
 
 =head1 METHODS
+=cut
+
+sub auth : Local {
+    my ($self, $ctx) = @_;
+
+    my $user = $ctx->authenticate({}, 'default');
+
+    $ctx->detach unless $user;
+
+    $ctx->response->body('success');
+}
+
+my $client = OAuth::Lite2::Client::WebServer->new(
+    id               => q{af5859b5bf7b35f172a0eab126d072a5227f4465},
+    secret           => q{13a152404029e4fa1ee8a680cddac8ee97698293},
+    authorize_uri    => q{http://localhost:3000/oauth/authorize},
+    access_token_uri => q{http://localhost:3000/oauth/token},
+);
+
+# redirect user to authorize page.
+sub start :Local {
+    my ( $self, $c ) = @_;
+
+    my $redirect_url = $client->uri_to_redirect(
+        redirect_uri => q{http://localhost:3333/callback},
+        scope        => q{photo},
+        state        => q{optional_state},
+    );
+
+    $c->res->redirect( $redirect_url );
+}
+
 
 =head2 callback
 =cut
 sub callback :Local {
     my ( $self, $c )  = @_;
-    $c->response->body( "CALLBACK with CODE:" . $c->req->param("code") );
+
+    if ( $c->authenticate( undef, 'default' ) ) {
+        # $c->stash->{message} = "Logged in successfully.";
+        # $c->res->redirect( $c->uri_for( q[/] ) );
+        $c->res->body("Logged in successfully.");
+     } else {
+        $c->res->body("Log in failed.");
+     }
+
+    # $c->response->body( "CALLBACK with CODE:" . $c->req->param("code") );
+    # my $your_app = $c;
+    # my $code = $your_app->request->param("code");
+    # my $access_token = $client->get_access_token(
+    #     code         => $code,
+    #     redirect_uri => q{http://localhost:3333/callback},
+    # ) or return $your_app->error( $client->errstr );
 }
 
 

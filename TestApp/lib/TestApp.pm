@@ -38,8 +38,35 @@ __PACKAGE__->config(
     disable_component_resolution_regex_fallback => 1,
 );
 
+__PACKAGE__->config( 'authentication' => {
+     default_realm => 'oauth2',
+     realms => {
+         oauth2 => {
+             credential => {
+                 class              => 'OAuth2',
+                 application_id     => q{af5859b5bf7b35f172a0eab126d072a5227f4465},
+                 application_secret => q{13a152404029e4fa1ee8a680cddac8ee97698293},
+                 redirect_uri       => q{http://localhost:3333/callback},
+                 site => "Brukere",
+                 authorize_path    => q{/oauth/authorize},
+                 authorize_url     => q{http://localhost:3000/oauth/authorize},
+                 access_token_path => q{/oauth/token},
+                 access_token_url  => q{http://localhost:3000/oauth/token},
+             },
+             store => {
+                 class => 'Null',
+             },
+         },
+     },
+ },
+);
+
 # Start the application
-__PACKAGE__->setup();
+__PACKAGE__->setup(qw(
+    Authentication
+));
+
+
 
 
 =head1 NAME
