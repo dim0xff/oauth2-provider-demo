@@ -23,6 +23,9 @@ Catalyst Controller.
 
 sub index : Path('/protected/resource') {
     my ( $self, $c ) = @_;
+    warn $c->request->env->{REMOTE_USER};
+    warn $c->request->env->{X_OAUTH_CLIENT_ID};
+    warn $c->request->env->{X_OAUTH_SCOPE};
     $c->response->body('This is a protected resource');
 }
 

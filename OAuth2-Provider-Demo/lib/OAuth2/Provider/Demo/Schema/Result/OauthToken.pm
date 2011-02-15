@@ -1,4 +1,4 @@
-package OAuth2::Provider::Demo::Schema::Result::OauthClient;
+package OAuth2::Provider::Demo::Schema::Result::OauthToken;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
@@ -12,7 +12,7 @@ extends 'DBIx::Class::Schema';
 
 __PACKAGE__->load_namespaces;
 __PACKAGE__->load_components(qw(Core));
-__PACKAGE__->table("oauth_clients");
+__PACKAGE__->table("oauth_tokens");
 
 __PACKAGE__->add_columns(
     id => { 
@@ -20,37 +20,43 @@ __PACKAGE__->add_columns(
         default_value => undef, 
         is_auto_increment => 1,
         is_nullable => 0, 
-        size => 11 
-    },
-    name => {
-        data_type => "VARCHAR",
-        default_value => "",
-        is_nullable => 1,
-        size => 255
-    },
-    client_id => { 
-        data_type => "VARCHAR", 
-        default_value => "", 
-        is_nullable => 1, 
-        size => 255 
+        size => 11,
     },
     user_id => {
         data_type => "VARCHAR",
         default_value => "",
         is_nullable => 1,
-        size => 255
+        size => 255,
     },
-    client_secret => { 
+    client_id => { 
+        data_type => "VARCHAR", 
+        default_value => "", 
+        is_nullable => 1, 
+        size => 255,
+    },
+    access_token => { 
         data_type => "VARCHAR",
         default_value => "",
         is_nullable => 1,
-        size => 255 
+        size => 255 ,
     },
-    redirect_uri => { 
+    refresh_token => { 
         data_type => "VARCHAR",
         default_value => "",
         is_nullable => 1,
         size => 255, 
+    },
+    scope => { 
+        data_type => "VARCHAR",
+        default_value => "",
+        is_nullable => 1,
+        size => 255, 
+    },
+    expires => { 
+        data_type => "INT",
+        default_value => undef,
+        is_nullable => 1,
+        size => 11,
     },
  
 );
