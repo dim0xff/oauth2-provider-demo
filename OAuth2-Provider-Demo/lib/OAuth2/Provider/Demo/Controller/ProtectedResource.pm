@@ -7,6 +7,7 @@ use Plack::Util::Accessor qw(realm data_handler error_uri);
 use OAuth::Lite2::Server::Error;
 use OAuth::Lite2::ParamMethods;
 use Carp();
+use Try::Tiny;
 
 use DemoDataHandler;
 
@@ -48,40 +49,63 @@ sub resource :Chained('base') :PathPart('resource') :Args(0) {
 
 sub check_protected_resource : Private {
     my ( $self, $c ) = @_;
+
     my $req = $c->req;
-    my $parser = OAuth::Lite2::ParamMethods->get_param_parser($req)
-        or OAuth::Lite2::Server::Error::InvalidRequest->throw;
 
-    # after draft-v6, $params aren't required.
-    my ($token, $params) = $parser->parse($req);
-    OAuth::Lite2::Server::Error::InvalidRequest->throw unless $token;
+    try {
+        my $parser = OAuth::Lite2::ParamMethods->get_param_parser($req)
+            or OAuth::Lite2::Server::Error::InvalidRequest->throw;
 
-    my $dh = DemoDataHandler->new;
+        # after draft-v6, $params aren't required.
+        my ($token, $params) = $parser->parse($req);
+        OAuth::Lite2::Server::Error::InvalidRequest->throw unless $token;
 
-    my $access_token = $dh->get_access_token($token);
+        my $dh = DemoDataHandler->new;
 
-    OAuth::Lite2::Server::Error::InvalidToken->throw
-        unless $access_token;
+        my $access_token = $dh->get_access_token($token);
 
-    Carp::croak "OAuth::Lite2::Server::DataHandler::get_access_token doesn't return OAuth::Lite2::Model::AccessToken"
-        unless $access_token->isa("OAuth::Lite2::Model::AccessToken");
+        OAuth::Lite2::Server::Error::InvalidToken->throw
+            unless $access_token;
 
-    OAuth::Lite2::Server::Error::ExpiredToken->throw
-        unless ($access_token->created_on + $access_token->expires_in > time());
+        Carp::croak "OAuth::Lite2::Server::DataHandler::get_access_token doesn't return OAuth::Lite2::Model::AccessToken"
+            unless $access_token->isa("OAuth::Lite2::Model::AccessToken");
 
-    my $auth_info = $dh->get_auth_info_by_id($access_token->auth_id);
+        OAuth::Lite2::Server::Error::ExpiredToken->throw
+            unless ($access_token->created_on + $access_token->expires_in > time());
 
-    OAuth::Lite2::Server::Error::InvalidToken->throw
-        unless $auth_info;
+        my $auth_info = $dh->get_auth_info_by_id($access_token->auth_id);
 
-    Carp::croak "OAuth::Lite2::Server::DataHandler::get_auth_info_by_id doesn't return OAuth::Lite2::Model::AuthInfo"
-        unless $auth_info->isa("OAuth::Lite2::Model::AuthInfo");
+        OAuth::Lite2::Server::Error::InvalidToken->throw
+            unless $auth_info;
 
-    $dh->validate_client_by_id($auth_info->client_id)
-        or OAuth::Lite2::Server::Error::InvalidToken->throw;
+        Carp::croak "OAuth::Lite2::Server::DataHandler::get_auth_info_by_id doesn't return OAuth::Lite2::Model::AuthInfo"
+            unless $auth_info->isa("OAuth::Lite2::Model::AuthInfo");
 
-    $dh->validate_user_by_id($auth_info->user_id)
-        or OAuth::Lite2::Server::Error::InvalidToken->throw;
+        $dh->validate_client_by_id($auth_info->client_id)
+            or OAuth::Lite2::Server::Error::InvalidToken->throw;
+
+        $dh->validate_user_by_id($auth_info->user_id)
+            or OAuth::Lite2::Server::Error::InvalidToken->throw;
+    } catch {
+
+        if ($_->isa("OAuth::Lite2::Server::Error")) {
+            my @params;
+            push(@params, sprintf(q{realm="%s"}, $self->{realm}))
+                if $self->{realm};
+            push(@params, sprintf(q{error="%s"}, $_->type));
+            push(@params, sprintf(q{error_description="%s"}, $_->description))
+                if $_->description;
+            push(@params, sprintf(q{error_uri="%s"}, $self->{error_uri}))
+                if $self->{error_uri};
+            $c->res->code( $_->code );
+            $c->res->headers->header( 'WWW-Authenticate' => "OAuth " . join(', ', @params) );
+            $c->stash->{error} = \@params;
+            $c->detach($c->view('JSON'));
+        } else {
+            # re-throw
+            die $_;
+        }
+    };
 }
 
 =head1 AUTHOR
