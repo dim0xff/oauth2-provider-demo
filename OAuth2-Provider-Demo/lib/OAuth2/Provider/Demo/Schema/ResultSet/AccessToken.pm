@@ -1,4 +1,4 @@
-package OAuth2::Provider::Demo::Schema::ResultSet::OauthClient;
+package OAuth2::Provider::Demo::Schema::ResultSet::AccessToken;
 
 use strict;
 use warnings;

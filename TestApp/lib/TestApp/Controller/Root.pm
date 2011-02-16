@@ -5,6 +5,9 @@ use namespace::autoclean;
 use OAuth::Lite2::Client::WebServer;
 use Data::Dumper;
 
+use HTTP::Request::Common;
+use LWP::UserAgent;
+
 BEGIN { extends 'Catalyst::Controller' }
 
 #
@@ -27,7 +30,7 @@ TestApp::Controller::Root - Root Controller for TestApp
 sub auth : Local {
     my ($self, $ctx) = @_;
 
-    my $user = $ctx->authenticate({}, 'default');
+    my $user = $ctx->authenticate({},'oauth2');
 
     $ctx->detach unless $user;
 
@@ -60,10 +63,8 @@ sub start :Local {
 sub callback :Local {
     my ( $self, $c )  = @_;
 
-    if ( $c->authenticate( undef, 'default' ) ) {
-        # $c->stash->{message} = "Logged in successfully.";
-        # $c->res->redirect( $c->uri_for( q[/] ) );
-        $c->res->body("Logged in successfully.");
+    if ( $c->authenticate( undef, 'oauth2' ) ) {
+        $c->res->body("Logged in successfully." . Dumper($c->user)) ;
      } else {
         $c->res->body("Log in failed.");
      }
@@ -77,6 +78,16 @@ sub callback :Local {
     # ) or return $your_app->error( $client->errstr );
 }
 
+sub info : Global {
+    my ( $self, $c ) = @_;
+    # curl -H 'Authorization: OAuth access_token_xx' "http://localhost:3000/me"
+    my $r = HTTP::Request->new( GET => "http://localhost:3000/me",
+                                HTTP::Headers->new( Authorization => 'OAuth ' . $c->user->token ), 
+                              );
+    my $ua       = LWP::UserAgent->new;
+    my $response = $ua->request($r);
+    $c->res->body( Dumper( $response->content ) );
+}
 
 =head2 index
 
