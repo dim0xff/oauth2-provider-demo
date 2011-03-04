@@ -7,7 +7,7 @@ use Net::OAuth2::Client;
 use namespace::autoclean;
 
 
-has [qw(application_id application_secret site)] => (
+has [qw(application_id application_secret site callback_uri)] => (
     is       => 'ro',
     isa      => NonEmptySimpleStr,
     required => 1,
@@ -37,7 +37,7 @@ sub _build__oauth {
 
     return Net::OAuth2::Client->new(
         (map { ($self->$_) } qw(application_id application_secret)),
-        (map { ($_ => $self->$_) } qw(site authorize_path authorize_url access_token_path access_token_url)),
+        (map { ($_ => $self->$_) } qw(callback_uri site authorize_path authorize_url access_token_path access_token_url)),
         @{ $self->oauth_args },
         access_token_method => 'POST',
     );
@@ -61,7 +61,7 @@ sub authenticate {
 
     if ( defined( my $code = $ctx->request->params->{code} ) ) {
         my $token = $self->_oauth
-            ->web_server( redirect_uri =>  "http://localhost:3333/callback" )
+            ->web_server( redirect_uri => $self->callback_uri )
             ->get_access_token( $code, grant_type => 'authorization_code' );
         die 'Error validating verification code' unless $token;
         return $realm->find_user( {
@@ -70,7 +70,7 @@ sub authenticate {
     }
     else {
         my $url = $self->_oauth
-            ->web_server( redirect_uri =>  "http://localhost:3333/callback" )
+            ->web_server( redirect_uri => $self->callback_uri )
             ->authorize_url( %{ $auth_info } );
         $ctx->response->redirect( $url );
         return;

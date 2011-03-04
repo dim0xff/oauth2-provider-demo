@@ -40,8 +40,8 @@ sub auth : Local {
 my $client = OAuth::Lite2::Client::WebServer->new(
     id               => q{af5859b5bf7b35f172a0eab126d072a5227f4465},
     secret           => q{13a152404029e4fa1ee8a680cddac8ee97698293},
-    authorize_uri    => q{http://localhost:3000/oauth/authorize},
-    access_token_uri => q{http://localhost:3000/oauth/token},
+    authorize_uri    => q{http://localhost.provider:3000/oauth/authorize},
+    access_token_uri => q{http://localhost.provider:3000/oauth/token},
 );
 
 # redirect user to authorize page.
@@ -49,7 +49,7 @@ sub start :Local {
     my ( $self, $c ) = @_;
 
     my $redirect_url = $client->uri_to_redirect(
-        redirect_uri => q{http://localhost:3333/callback},
+        redirect_uri => q{http://localhost.client:3333/callback},
         scope        => q{photo},
         state        => q{optional_state},
     );
@@ -78,7 +78,7 @@ sub callback :Local {
     # ) or return $your_app->error( $client->errstr );
 }
 
-sub info : Global {
+sub my_info : Global {
     my ( $self, $c ) = @_;
     # curl -H 'Authorization: OAuth access_token_xx' "http://localhost:3000/me"
     my $r = HTTP::Request->new( GET => "http://localhost:3000/me",
