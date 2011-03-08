@@ -8,6 +8,10 @@ use Data::Dumper;
 use HTTP::Request::Common;
 use LWP::UserAgent;
 
+use MIME::Base64;
+use Crypt::CBC;
+use Digest::SHA qw/hmac_sha1/;
+
 BEGIN { extends 'Catalyst::Controller' }
 
 #
@@ -37,52 +41,30 @@ sub auth : Local {
     $ctx->response->body('success');
 }
 
-my $client = OAuth::Lite2::Client::WebServer->new(
-    id               => q{af5859b5bf7b35f172a0eab126d072a5227f4465},
-    secret           => q{13a152404029e4fa1ee8a680cddac8ee97698293},
-    authorize_uri    => q{http://localhost.provider:3000/oauth/authorize},
-    access_token_uri => q{http://localhost.provider:3000/oauth/token},
-);
-
-# redirect user to authorize page.
-sub start :Local {
-    my ( $self, $c ) = @_;
-
-    my $redirect_url = $client->uri_to_redirect(
-        redirect_uri => q{http://localhost.client:3333/callback},
-        scope        => q{photo},
-        state        => q{optional_state},
-    );
-
-    $c->res->redirect( $redirect_url );
-}
-
-
 =head2 callback
 =cut
 sub callback :Local {
     my ( $self, $c )  = @_;
 
     if ( $c->authenticate( undef, 'oauth2' ) ) {
-        $c->res->body("Logged in successfully." . Dumper($c->user)) ;
+        $c->res->body("<a href='/auth'>AUTH</a> Logged in successfully." . Dumper($c->user)) ;
      } else {
         $c->res->body("Log in failed.");
      }
-
-    # $c->response->body( "CALLBACK with CODE:" . $c->req->param("code") );
-    # my $your_app = $c;
-    # my $code = $your_app->request->param("code");
-    # my $access_token = $client->get_access_token(
-    #     code         => $code,
-    #     redirect_uri => q{http://localhost:3333/callback},
-    # ) or return $your_app->error( $client->errstr );
 }
 
-sub my_info : Global {
+sub my_info : Global {  #To access api
     my ( $self, $c ) = @_;
-    # curl -H 'Authorization: OAuth access_token_xx' "http://localhost:3000/me"
-    my $r = HTTP::Request->new( GET => "http://localhost:3000/me",
-                                HTTP::Headers->new( Authorization => 'OAuth ' . $c->user->token ), 
+    my $token     = $c->user->{token};
+    my $timestamp = localtime();
+    my $nonce     = Digest::SHA::hmac_sha1($token, 'hmackey');
+    my $cipher    = Crypt::CBC->new( {'key' => 'length16length16', 'cipher'=> 'Blowfish', } );
+    my $signature = encode_base64( $cipher->encrypt($c->user->{code}) );
+    $signature    =~ s/\R//g;
+    
+    
+    my $r = HTTP::Request->new( GET => "http://localhost.provider:3000/my/test",
+                                HTTP::Headers->new( Authorization => "MAC token=$token,timestamp=$timestamp,nonce=$nonce,signature=$signature" ), 
                               );
     my $ua       = LWP::UserAgent->new;
     my $response = $ua->request($r);
@@ -97,9 +79,8 @@ The root page (/)
 
 sub index :Path :Args(0) {
     my ( $self, $c ) = @_;
-
-    # Hello World
-    $c->response->body( $c->welcome_message );
+    use Data::Dumper;
+    $c->res->body( Dumper($c->user) . " <a href='/auth'>auth</a> " );
 }
 
 =head2 default

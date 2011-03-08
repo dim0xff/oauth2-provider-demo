@@ -66,6 +66,7 @@ sub authenticate {
         die 'Error validating verification code' unless $token;
         return $realm->find_user( {
             token => $token->{access_token},
+            code  => $code,
         }, $ctx );
     }
     else {
